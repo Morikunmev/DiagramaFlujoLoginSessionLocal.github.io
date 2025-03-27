@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Secuencia de Login</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .mermaid {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diagrama de Secuencia del Proceso de Login</h1>
+        <div class="mermaid">
+            sequenceDiagram
+                participant Usuario
+                participant Login.html
+                participant Login.js
+                participant API as Login.php API
+                participant Storage as LocalStorage/SessionStorage
+                participant Index.html
+                participant Index.js
+                
+                Usuario->>Login.html: Ingresa credenciales
+                Usuario->>Login.html: Marca/No marca "Recordarme"
+                Login.html->>Login.js: Submit del formulario
+                Login.js->>API: Solicitud POST (username, password)
+                API-->>Login.js: Respuesta (success, user_id, token...)
+                
+                alt Login exitoso
+                    Login.js->>Storage: Guarda datos de sesión
+                    
+                    alt "Recordarme" marcado
+                        Login.js->>Storage: Guarda en localStorage
+                        Login.js->>Storage: sessionPermanent = true
+                    else "Recordarme" no marcado
+                        Login.js->>Storage: Guarda en sessionStorage
+                        Login.js->>Storage: Guarda también en localStorage
+                        Login.js->>Storage: sessionPermanent = false
+                    end
+                    
+                    Login.js->>Index.html: Redirección a página principal
+                    Index.html->>Index.js: DOMContentLoaded
+                    Index.js->>Storage: Verifica datos de sesión
+                    
+                    alt Datos de sesión encontrados
+                        Index.js->>Index.html: Muestra perfil, oculta botón login
+                    else No hay datos de sesión
+                        Index.js->>Index.html: Muestra botón login, oculta perfil
+                    end
+                    
+                else Login fallido
+                    Login.js->>Login.html: Muestra mensaje de error
+                end
+                
+                Note over Usuario,Index.js: Navegación durante la sesión
+                
+                Usuario->>Index.html: Visita nuevamente index.html
+                Index.html->>Index.js: DOMContentLoaded
+                Index.js->>Storage: Verifica datos de sesión
+                Index.js->>Index.html: Muestra/oculta elementos según estado
+                
+                opt Usuario cierra sesión
+                    Usuario->>Index.html: Click en "Cerrar sesión"
+                    Index.html->>Index.js: Evento click en logout-btn
+                    Index.js->>Storage: Elimina datos de sesión
+                    Index.js->>Index.html: Redirección a index.html
+                end
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            sequence: {
+                showSequenceNumbers: false,
+                boxMargin: 10,
+                noteMargin: 10,
+                messageMargin: 35
+            }
+        });
+    </script>
+</body>
+</html>
